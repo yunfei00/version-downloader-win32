@@ -1,0 +1,27 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with MSVC
+        shell: cmd
+        run: |
+          mkdir build
+          cl /std:c++17 /EHsc /O2 /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG ^
+            src\main.cpp src\app.cpp src\downloader.cpp ^
+            /Fe:build\version-downloader.exe ^
+            comctl32.lib urlmon.lib shlwapi.lib winhttp.lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-downloader
+          path: build/version-downloader.exe
