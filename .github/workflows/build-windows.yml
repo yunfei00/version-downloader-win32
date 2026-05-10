@@ -1,5 +1,4 @@
 name: Build Windows EXE
-
 on:
   push:
     branches: ["main"]
@@ -10,16 +9,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Build with MSVC
+      - name: Build Release with MSVC
         shell: cmd
         run: |
           mkdir build
           cl /std:c++17 /EHsc /O2 /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG ^
-            src\main.cpp src\app.cpp src\downloader.cpp ^
+            src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp ^
             /Fe:build\version-downloader.exe ^
-            comctl32.lib urlmon.lib shlwapi.lib winhttp.lib
-
+            comctl32.lib winhttp.lib comdlg32.lib shell32.lib
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
