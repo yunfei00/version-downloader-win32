@@ -2,8 +2,8 @@
 #include "resource.h"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,2,0,0
+ PRODUCTVERSION 0,2,0,0
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -20,9 +20,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Yunfei Tools\0"
             VALUE "FileDescription", "Version Downloader\0"
-            VALUE "FileVersion", "0.1.0.0\0"
+            VALUE "FileVersion", "0.2.0.0\0"
             VALUE "ProductName", "Version Downloader\0"
-            VALUE "ProductVersion", "0.1.0.0\0"
+            VALUE "ProductVersion", "0.2.0.0\0"
         END
     END
     BLOCK "VarFileInfo"

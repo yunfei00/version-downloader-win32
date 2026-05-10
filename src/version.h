@@ -1,7 +1,7 @@
 #pragma once
 
 #define APP_NAME L"Version Downloader"
-#define APP_VERSION L"0.1.0"
+#define APP_VERSION L"0.2.0"
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
