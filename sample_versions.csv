@@ -1,0 +1,4 @@
+name,filename,size,url
+1KB test,text-1kb.txt,1 KB,https://raw.githubusercontent.com/github/gitignore/main/Global/Emacs.gitignore
+README test,readme.txt,small,https://raw.githubusercontent.com/git/git/master/README.md
+License test,license.txt,small,https://raw.githubusercontent.com/git/git/master/COPYING

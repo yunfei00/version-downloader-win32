@@ -17,8 +17,19 @@ jobs:
             src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp ^
             /Fe:build\version-downloader.exe ^
             comctl32.lib winhttp.lib comdlg32.lib shell32.lib
-      - name: Upload artifact
+      - name: Prepare ZIP package
+        shell: pwsh
+        run: |
+          Copy-Item README.md build/README.md
+          Copy-Item sample_versions.csv build/sample_versions.csv
+          Compress-Archive -Path build/version-downloader.exe,build/README.md,build/sample_versions.csv -DestinationPath build/version-downloader-win32.zip -Force
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: version-downloader
+          name: version-downloader.exe
           path: build/version-downloader.exe
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-downloader-win32.zip
+          path: build/version-downloader-win32.zip

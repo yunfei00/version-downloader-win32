@@ -1,34 +1,47 @@
 # Version Downloader (Win32)
 
-## 截图（占位）
-![screenshot placeholder](docs/screenshot-placeholder.png)
+## 使用步骤
+1. 输入 CSV URL，或点击“加载本地CSV”。
+2. 选择下载目录（默认是程序目录下 `downloads`）。
+3. 在列表中多选（支持 Ctrl+A）。
+4. 点击“下载选中项”开始串行批量下载。
+5. 下载中可点击“取消下载”。
 
-## 功能列表
-- URL 加载 CSV / 本地 CSV 文件加载
-- Report ListView（全行选中、双缓冲、列宽拖动）
-- 后台 WinHTTP 分块下载（可取消）
-- 实时进度、速度、已下载/总大小
-- 状态管理：等待下载 / 下载中 xx% / 已完成 / 已取消 / 失败
-- 时间戳日志（只读自动滚动）
-
-## CSV 示例
+## CSV 格式说明
 ```csv
 name,filename,size,url
-v1.0.0,app-v1.0.0.zip,12.5 MB,https://example.com/a.zip
+版本名,保存文件名,显示大小,下载链接
+```
+- `size` 仅用于展示；实际下载进度和校验以 HTTP `Content-Length` 为准。
+- 若服务器不返回 `Content-Length`，界面显示“未知大小”，仍可下载。
+
+## 批量下载说明
+- 支持 ListView 多选后串行下载（不并发）。
+- 状态列会显示：等待下载 / 排队中 / 下载中 xx% / 已完成 / 已取消 / 失败。
+- 日志会记录总数、当前序号、每个文件结果和最终统计。
+
+## 下载目录说明
+- 默认目录：`<exe目录>\downloads`
+- 可在界面中修改并保存到 `config.ini`：
+```ini
+[General]
+DownloadDir=D:\downloads
 ```
 
-## 下载功能说明
-- 下载目录固定为 `downloads/`，不存在时自动创建。
-- 每次下载在后台线程执行，UI 线程只处理界面。
-- 线程通过 `WM_APP+1/+2/+3` 回传进度、日志、完成事件。
+## GitHub Actions 产物
+工作流会上传：
+- `version-downloader.exe`
+- `version-downloader-win32.zip`（包含 exe、README.md、sample_versions.csv）
 
-## Win32 架构说明
-- `main.cpp`：程序入口。
-- `app.cpp/.h`：消息循环、窗口消息分发、业务编排。
-- `ui.cpp/.h`：控件创建、布局、样式。
-- `csv_parser.cpp/.h`：UTF-8 CSV 加载/解析（HTTP + 本地）。
-- `download_worker.cpp/.h`：WinHTTP 下载线程。
-- `logger.cpp/.h`：时间戳日志格式化。
+## 从 Actions 下载 EXE
+1. 打开仓库 Actions。
+2. 进入 `Build Windows EXE`。
+3. 在 Artifacts 下载 `version-downloader.exe` 或 `version-downloader-win32.zip`。
+
+## 常见问题
+- 为什么不用 Qt：为保持零额外运行时依赖，使用纯 Win32 API + Common Controls。
+- 为什么 exe 很小：未引入大型 GUI 框架，仅链接系统库。
+- 下载失败如何排查：检查 URL 是否可访问、HTTP 状态码、目录权限、网络代理/防火墙。
 
 ## 本地编译（MSVC Release）
 ```bat
