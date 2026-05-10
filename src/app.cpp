@@ -1,10 +1,8 @@
+#include "pch.h"
 #include "app.h"
 #include "csv_parser.h"
 #include "logger.h"
 #include "version.h"
-#include <commctrl.h>
-#include <shellapi.h>
-#include <shlobj.h>
 #include <fstream>
 #include <filesystem>
 

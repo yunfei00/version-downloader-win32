@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "logger.h"
-#include <windows.h>
 
 std::wstring BuildLogLine(const std::wstring& text) {
     SYSTEMTIME st{}; GetLocalTime(&st);

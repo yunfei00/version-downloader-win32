@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "csv_parser.h"
 
-#include <windows.h>
-#include <winhttp.h>
 
 #include <sstream>
 #include <vector>

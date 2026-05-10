@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "download_worker.h"
 #include "logger.h"
-#include <windows.h>
-#include <winhttp.h>
 #include <filesystem>
 #include <vector>
 #pragma comment(lib, "winhttp.lib")
@@ -12,7 +11,7 @@ void DownloadWorker::Cancel(){ cancel_=true; }
 
 bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, const std::wstring& filename, const std::wstring& url, const std::wstring& savePath, UINT msgProgress, UINT msgLog, UINT msgDone) {
     if (running_) return false; Join(); cancel_=false; running_=true;
-    worker_=std::thread([=, this]{
+    worker_=std::thread([this, hwnd, row, fileIndex, fileCount, filename, url, savePath, msgProgress, msgLog, msgDone]{
         auto done = new DownloadDonePayload{row,false,L"失败",0,0,false};
         std::wstring partPath = savePath + L".part";
         URL_COMPONENTS uc{}; uc.dwStructSize=sizeof(uc); wchar_t host[256]={}, path[2048]={};
@@ -33,7 +32,7 @@ bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, con
             unsigned long long total=0; DWORD len=sizeof(total); WinHttpQueryHeaders(r,WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,WINHTTP_HEADER_NAME_BY_INDEX,&total,&len,WINHTTP_NO_HEADER_INDEX); done->expected=total;
             unsigned long long downloaded=0; auto start=GetTickCount64(); std::vector<unsigned char> buf(64*1024);
             while(!cancel_){ DWORD avail=0; if(!WinHttpQueryDataAvailable(r,&avail)){done->message=L"服务器断开"; break;} if(avail==0){done->success=true; done->message=L"下载完成"; break;}
-                DWORD rd=0; DWORD toRead=min<DWORD>(avail,(DWORD)buf.size()); if(!WinHttpReadData(r,buf.data(),toRead,&rd)||rd==0){done->message=L"下载中断"; break;}
+                DWORD rd=0; DWORD toRead=std::min<DWORD>(avail, static_cast<DWORD>(buf.size())); if(!WinHttpReadData(r,buf.data(),toRead,&rd)||rd==0){done->message=L"下载中断"; break;}
                 DWORD wr=0; if(!WriteFile(hf,buf.data(),rd,&wr,nullptr)||wr!=rd){done->message=L"写入失败"; break;}
                 downloaded+=rd; done->downloaded=downloaded; int p= total? (int)(downloaded*100/total):0; double sec=(GetTickCount64()-start)/1000.0; double kb=sec>0?(downloaded/1024.0/sec):0;
                 PostMessageW(hwnd,msgProgress,reinterpret_cast<WPARAM>(new DownloadProgressPayload{row,p,kb,downloaded,total,fileIndex,fileCount,filename}),0);
