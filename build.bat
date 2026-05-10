@@ -30,7 +30,7 @@ for /f %%i in ('git rev-parse --short HEAD 2^>nul') do set GIT_COMMIT=%%i
 if "%GIT_COMMIT%"=="" set GIT_COMMIT=dev
 
 cl /nologo /std:c++17 /EHsc /O2 /MD /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG /DBUILD_COMMIT=L"%GIT_COMMIT%" /c ^
-  src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp /Fo:build\
+  src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp src\hash_utils.cpp /Fo:build\
 if errorlevel 1 (
   echo Build failed while compiling C++ sources.
   exit /b 1
@@ -42,7 +42,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-link /nologo /OUT:build\version-downloader.exe build\main.obj build\app.obj build\ui.obj build\csv_parser.obj build\logger.obj build\download_worker.obj build\version.res ^
+link /nologo /OUT:build\version-downloader.exe build\main.obj build\app.obj build\ui.obj build\csv_parser.obj build\logger.obj build\download_worker.obj build\hash_utils.obj build\version.res ^
   comctl32.lib winhttp.lib comdlg32.lib shell32.lib user32.lib gdi32.lib advapi32.lib ole32.lib
 if errorlevel 1 (
   echo Build failed while linking executable.

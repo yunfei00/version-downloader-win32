@@ -1,55 +1,64 @@
 # Version Downloader (Win32)
 
-当前版本：`v0.1.0`。
+当前版本：`v0.2.0`
 
-## 使用步骤
-1. 输入 CSV URL，或点击“加载本地CSV”。
-2. 选择下载目录（默认是程序目录下 `downloads`）。
-3. 在列表中多选（支持 Ctrl+A）。
-4. 点击“下载选中项”开始串行批量下载。
-5. 下载中可点击“取消下载”。
+## V0.2.0 新功能
+- 断点续传（`.part`）
+- 失败自动重试（默认 3 次，1s/2s/4s）
+- WinHTTP 超时设置（DNS/连接/发送/接收）
+- CSV 支持可选 `sha256` 字段，且按表头名识别顺序
+- 下载完成后进行大小校验；有 sha256 时进行 SHA256 校验
+- `config.ini` 下载配置项增强
 
-## 版本号体系
-- 应用名称：`Version Downloader`
-- 当前应用版本：`0.1.0`
-- Tag 版本格式：`v*`（例如 `v0.1.0`）
-- 打 tag 后，GitHub Actions 会自动创建 Release，并附加 exe 和 zip。
-
-## CSV 格式说明
+## CSV 格式
+旧格式（兼容）：
 ```csv
 name,filename,size,url
-版本名,保存文件名,显示大小,下载链接
 ```
 
-## 本地编译（Developer Command Prompt）
+新格式：
+```csv
+name,filename,size,sha256,url
+```
+
+说明：
+- 自动忽略空行
+- 非法行会被忽略并写调试日志
+- 有 `sha256` 时优先做 SHA256 校验；无 `sha256` 时只做大小校验
+
+## 断点续传说明
+- 下载写入 `filename.part`
+- 若存在 `.part`，会尝试 Range 续传
+- 服务器不支持 Range 时自动删除旧 `.part` 并重下
+- 仅在校验通过后把 `.part` 重命名为正式文件
+
+## config.ini
+```ini
+[General]
+DownloadDir=downloads
+
+[Download]
+RetryCount=3
+ConnectTimeoutMs=10000
+SendTimeoutMs=30000
+ReceiveTimeoutMs=30000
+EnableResume=1
+VerifySHA256=1
+```
+
+## 常见错误
+- 服务器不支持断点续传：会自动重下
+- SHA256 校验失败：保留 `.part` 供排查
+- 403/404：不重试
+- 下载超时/网络中断/5xx：会重试
+
+## 本地编译
 ```bat
 build.bat
 ```
 
-执行后输出目录：
-- `build/version-downloader.exe`
-- `build/README.md`
-- `build/sample_versions.csv`
-
-## GitHub Actions
-工作流 `.github/workflows/build-windows.yml` 支持：
-1. push 到 `main` 自动构建并上传 artifact。
-2. `workflow_dispatch` 手动触发构建并上传 artifact。
-3. push `v*` tag 自动构建、上传 artifact、创建 Release。
-
-## 发布版本（Tag -> Release）
+## 发布
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
-
-## 如何下载发布产物
-1. 打开 GitHub 仓库的 **Releases** 页面。
-2. 进入对应版本（例如 `v0.1.0`）。
-3. 在 Assets 下载：
-   - `version-downloader.exe`
-   - `version-downloader-win32-v0.1.0.zip`
-
-## 常见问题
-- 下载失败：检查 URL 是否可访问、HTTP 状态码、目录权限、网络代理/防火墙。
-- 无法编译：请确认在 Visual Studio Developer Command Prompt 中执行 `build.bat`。
