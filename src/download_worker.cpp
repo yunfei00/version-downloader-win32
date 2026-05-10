@@ -12,7 +12,7 @@ void DownloadWorker::Cancel(){ cancel_=true; }
 
 bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, const std::wstring& filename, const std::wstring& url, const std::wstring& savePath, const std::wstring& expectedSha256, const DownloadOptions& options, UINT msgProgress, UINT msgLog, UINT msgDone) {
     if (running_) return false; Join(); cancel_=false; running_=true;
-    worker_=std::thread([=, this]{
+    worker_=std::thread([&, this]{
         auto done = new DownloadDonePayload{row,false,L"失败",0,0,false};
         std::wstring partPath = savePath + L".part";
         URL_COMPONENTS uc{}; uc.dwStructSize=sizeof(uc); wchar_t host[256]={}, path[2048]={}; uc.lpszHostName=host; uc.dwHostNameLength=256; uc.lpszUrlPath=path; uc.dwUrlPathLength=2048;
