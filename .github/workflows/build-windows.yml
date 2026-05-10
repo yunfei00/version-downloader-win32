@@ -2,47 +2,45 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: ["main"]
-    tags: ["v*"]
+    branches:
+      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set release version
         id: meta
-        shell: pwsh
-        run: |
-          if ("${{ github.ref }}" -like "refs/tags/v*") {
-            $v = "${{ github.ref_name }}"
-          } else {
-            $v = "v0.1.0"
-          }
-          "release_version=$v" >> $env:GITHUB_OUTPUT
-
-      - name: Build Release with MSVC
         shell: cmd
         run: |
-          mkdir build
-          for /f %%i in ('git rev-parse --short HEAD') do set GIT_COMMIT=%%i
-          cl /std:c++17 /EHsc /O2 /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG /DBUILD_COMMIT=L"%GIT_COMMIT%" ^
-            src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp src\version.rc ^
-            /Fe:build\version-downloader.exe ^
-            comctl32.lib winhttp.lib comdlg32.lib shell32.lib
+          set RELEASE_VERSION=v0.1.0
+          if "${{ github.ref_type }}"=="tag" set RELEASE_VERSION=${{ github.ref_name }}
+          echo release_version=%RELEASE_VERSION%>> %GITHUB_OUTPUT%
 
-      - name: Prepare package
-        shell: pwsh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build EXE (Release)
+        shell: cmd
         run: |
-          Copy-Item README.md build/README.md
-          Copy-Item sample_versions.csv build/sample_versions.csv
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          $zip = "dist/version-downloader-win32-${{ steps.meta.outputs.release_version }}.zip"
-          Compress-Archive -Path build/version-downloader.exe,build/README.md,build/sample_versions.csv -DestinationPath $zip -Force
-          "zip_path=$zip" >> $env:GITHUB_OUTPUT
+          call build.bat
+
+      - name: Package ZIP
         id: pack
+        shell: cmd
+        run: |
+          if not exist dist mkdir dist
+          set ZIP_PATH=dist\version-downloader-win32-${{ steps.meta.outputs.release_version }}.zip
+          powershell -NoProfile -Command "Compress-Archive -Path 'build/version-downloader.exe','build/README.md','build/sample_versions.csv' -DestinationPath '%ZIP_PATH%' -Force"
+          echo zip_path=%ZIP_PATH%>> %GITHUB_OUTPUT%
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
