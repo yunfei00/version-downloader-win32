@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "downloader.h"
 
-#include <windows.h>
-#include <winhttp.h>
 
 #include <vector>
 
@@ -24,7 +23,7 @@ void Downloader::Start(const std::wstring& url, const std::wstring& savePath,
     running_ = true;
     JoinWorker();
 
-    worker_ = std::thread([=]() {
+    worker_ = std::thread([this, url, savePath, onProgress, onFinish]() {
         bool success = false;
         std::wstring errorMsg;
 
