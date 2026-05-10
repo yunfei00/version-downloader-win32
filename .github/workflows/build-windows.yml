@@ -1,7 +1,9 @@
 name: Build Windows EXE
+
 on:
   push:
     branches: ["main"]
+    tags: ["v*"]
   workflow_dispatch:
 
 jobs:
@@ -9,27 +11,56 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set release version
+        id: meta
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/v*") {
+            $v = "${{ github.ref_name }}"
+          } else {
+            $v = "v0.1.0"
+          }
+          "release_version=$v" >> $env:GITHUB_OUTPUT
+
       - name: Build Release with MSVC
         shell: cmd
         run: |
           mkdir build
-          cl /std:c++17 /EHsc /O2 /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG ^
-            src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp ^
+          for /f %%i in ('git rev-parse --short HEAD') do set GIT_COMMIT=%%i
+          cl /std:c++17 /EHsc /O2 /DUNICODE /D_UNICODE /DWIN32 /D_WINDOWS /DNDEBUG /DBUILD_COMMIT=L"%GIT_COMMIT%" ^
+            src\main.cpp src\app.cpp src\ui.cpp src\csv_parser.cpp src\logger.cpp src\download_worker.cpp src\version.rc ^
             /Fe:build\version-downloader.exe ^
             comctl32.lib winhttp.lib comdlg32.lib shell32.lib
-      - name: Prepare ZIP package
+
+      - name: Prepare package
         shell: pwsh
         run: |
           Copy-Item README.md build/README.md
           Copy-Item sample_versions.csv build/sample_versions.csv
-          Compress-Archive -Path build/version-downloader.exe,build/README.md,build/sample_versions.csv -DestinationPath build/version-downloader-win32.zip -Force
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $zip = "dist/version-downloader-win32-${{ steps.meta.outputs.release_version }}.zip"
+          Compress-Archive -Path build/version-downloader.exe,build/README.md,build/sample_versions.csv -DestinationPath $zip -Force
+          "zip_path=$zip" >> $env:GITHUB_OUTPUT
+        id: pack
+
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: version-downloader.exe
           path: build/version-downloader.exe
+
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: version-downloader-win32.zip
-          path: build/version-downloader-win32.zip
+          name: version-downloader-win32-${{ steps.meta.outputs.release_version }}.zip
+          path: ${{ steps.pack.outputs.zip_path }}
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            build/version-downloader.exe
+            ${{ steps.pack.outputs.zip_path }}

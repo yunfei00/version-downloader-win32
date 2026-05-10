@@ -1,6 +1,7 @@
 #include "app.h"
 #include "csv_parser.h"
 #include "logger.h"
+#include "version.h"
 #include <commctrl.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -12,7 +13,10 @@ static std::wstring IniPath(){ return ExeDir()+L"\\config.ini"; }
 
 int App::Run(int n){ SetProcessDPIAware(); INITCOMMONCONTROLSEX ic{sizeof(ic),ICC_LISTVIEW_CLASSES|ICC_PROGRESS_CLASS}; InitCommonControlsEx(&ic);
 WNDCLASSW wc{}; wc.hInstance=h_; wc.lpszClassName=L"VersionDownloaderWnd"; wc.lpfnWndProc=WndProc; wc.hCursor=LoadCursor(nullptr,IDC_ARROW); RegisterClassW(&wc);
-hwnd_=CreateWindowExW(0,wc.lpszClassName,L"Version Downloader",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,1250,780,nullptr,nullptr,h_,this); ShowWindow(hwnd_,n);
+hwnd_=CreateWindowExW(0,wc.lpszClassName,APP_NAME L" v" APP_VERSION,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,1250,780,nullptr,nullptr,h_,this); ShowWindow(hwnd_,n);
+AppendLogText(ui_.logEdit, BuildLogLine(std::wstring(L"启动 ") + APP_NAME + L" v" + APP_VERSION));
+AppendLogText(ui_.logEdit, BuildLogLine(std::wstring(L"构建时间: ") + BUILD_DATE));
+AppendLogText(ui_.logEdit, BuildLogLine(std::wstring(L"构建提交: ") + BUILD_COMMIT));
 MSG msg; while(GetMessageW(&msg,nullptr,0,0)){TranslateMessage(&msg);DispatchMessageW(&msg);} return (int)msg.wParam; }
 LRESULT CALLBACK App::WndProc(HWND h,UINT m,WPARAM w,LPARAM l){ App* a=(App*)GetWindowLongPtrW(h,GWLP_USERDATA); if(m==WM_NCCREATE){a=(App*)((CREATESTRUCTW*)l)->lpCreateParams; SetWindowLongPtrW(h,GWLP_USERDATA,(LONG_PTR)a); a->hwnd_=h;} return a?a->Handle(m,w,l):DefWindowProcW(h,m,w,l);} 
 LRESULT App::Handle(UINT m,WPARAM w,LPARAM l){ switch(m){ case WM_CREATE: CreateMainUi(hwnd_,h_,ui_); LoadConfig(); SetWindowTextW(ui_.downloadDirEdit,downloadDir_.c_str()); EnableWindow(ui_.cancelBtn,FALSE); return 0; case WM_SIZE: ResizeMainUi(hwnd_,ui_); return 0;
