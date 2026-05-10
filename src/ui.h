@@ -11,4 +11,4 @@ struct UiHandles {
 void CreateMainUi(HWND hwnd, HINSTANCE h, UiHandles& ui);
 void ResizeMainUi(HWND hwnd, UiHandles& ui);
 void InitListViewColumns(HWND list);
-void AppendLogText(HWND logEdit, const std::wstring& line);
+void AppendLogText(const std::wstring& line);
