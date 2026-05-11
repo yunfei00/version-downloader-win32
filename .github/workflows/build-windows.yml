@@ -40,6 +40,10 @@ jobs:
         run: |
           set CL=/utf-8 %CL%
           call build.bat
+          if not exist build\http_directory_scanner.obj (
+            echo ERROR: src/http_directory_scanner.cpp was not compiled.
+            exit /b 1
+          )
 
       - name: Package ZIP
         id: pack
