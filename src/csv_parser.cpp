@@ -34,7 +34,7 @@ bool ParseCsvText(const std::wstring& csvText, std::vector<VersionItem>& items) 
         line=Trim(line); if(line.empty()) continue;
         auto cols=Split(line);
         auto get=[&](const std::wstring& k)->std::wstring{ auto it=idx.find(k); if(it==idx.end()||it->second>=(int)cols.size()) return L""; return cols[it->second];};
-        VersionItem it; it.index=row++; it.name=get(L"name"); it.filename=get(L"filename"); it.size=get(L"size"); it.url=get(L"url"); it.sha256=Lower(get(L"sha256"));
+        VersionItem it; it.index=row++; it.name=get(L"name"); it.filename=get(L"filename"); it.size=get(L"size"); it.url=get(L"url");
         if(it.name.empty()||it.filename.empty()||it.url.empty()) { OutputDebugStringW((L"CSV非法行: "+line+L"\n").c_str()); continue; }
         items.push_back(it);
     }
