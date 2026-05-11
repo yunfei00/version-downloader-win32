@@ -7,7 +7,8 @@ struct VersionItem {
     std::wstring name;
     std::wstring filename;
     std::wstring size;
-    std::wstring sha256;
+    unsigned long long sizeBytes = 0;
+    bool sizeKnown = false;
     std::wstring url;
-    std::wstring status = L"等待下载";
+    std::wstring status = L"等待";
 };

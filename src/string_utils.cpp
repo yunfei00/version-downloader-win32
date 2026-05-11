@@ -30,3 +30,5 @@ std::string WideToUtf8(const std::wstring& input) {
     WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), output.data(), utf8Len, nullptr, nullptr);
     return output;
 }
+
+std::wstring FormatBytes(unsigned long long bytes){ const wchar_t* u[]={L"B",L"KB",L"MB",L"GB"}; double v=(double)bytes; int i=0; while(v>=1024.0&&i<3){v/=1024.0;++i;} wchar_t b[64]; swprintf(b,64,L"%.2f %s",v,u[i]); return b; }

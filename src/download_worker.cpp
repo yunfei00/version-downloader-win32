@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "download_worker.h"
-#include "hash_utils.h"
 #include <filesystem>
 #include <vector>
 
@@ -10,7 +9,7 @@ DownloadWorker::~DownloadWorker(){ Cancel(); Join(); }
 void DownloadWorker::Join(){ if(worker_.joinable()) worker_.join(); }
 void DownloadWorker::Cancel(){ cancel_=true; }
 
-bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, const std::wstring& filename, const std::wstring& url, const std::wstring& savePath, const std::wstring& expectedSha256, const DownloadOptions& options, UINT msgProgress, UINT msgLog, UINT msgDone) {
+bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, const std::wstring& filename, const std::wstring& url, const std::wstring& savePath, const DownloadOptions& options, UINT msgProgress, UINT msgLog, UINT msgDone) {
     if (running_) return false; Join(); cancel_=false; running_=true;
     worker_=std::thread([&, this]{
         auto done = new DownloadDonePayload{row,false,L"失败",0,0,false};
@@ -42,13 +41,6 @@ bool DownloadWorker::Start(HWND hwnd, int row, int fileIndex, int fileCount, con
             CloseHandle(hf); if(r)WinHttpCloseHandle(r); if(c)WinHttpCloseHandle(c); if(s)WinHttpCloseHandle(s);
             if(done->success){
                 if(done->expected>0 && done->downloaded!=done->expected){done->success=false; done->message=L"下载大小校验失败";}
-                if(done->success && options.verifySHA256 && !expectedSha256.empty()){
-                    std::wstring actual,err; PostMessageW(hwnd,msgLog,0,(LPARAM)new std::wstring(L"期望 SHA256: "+expectedSha256));
-                    if(!ComputeFileSHA256(partPath,actual,err)){done->success=false; done->message=L"SHA256 计算失败: "+err;}
-                    PostMessageW(hwnd,msgLog,0,(LPARAM)new std::wstring(L"实际 SHA256: "+actual));
-                    if(done->success && _wcsicmp(actual.c_str(), expectedSha256.c_str())!=0){done->success=false; done->message=L"SHA256 校验失败";}
-                    PostMessageW(hwnd,msgLog,0,(LPARAM)new std::wstring(done->success?L"SHA256 校验成功":L"SHA256 校验失败"));
-                }
                 if(done->success){DeleteFileW(savePath.c_str()); MoveFileExW(partPath.c_str(),savePath.c_str(),MOVEFILE_REPLACE_EXISTING);} 
             }
             if(done->success||cancel_) break;
