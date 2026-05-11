@@ -38,6 +38,7 @@ jobs:
       - name: Build EXE (Release)
         shell: cmd
         run: |
+          set CL=/utf-8 %CL%
           call build.bat
 
       - name: Package ZIP

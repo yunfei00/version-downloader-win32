@@ -7,7 +7,10 @@ void InitListViewColumns(HWND list){
     const wchar_t* cols[]={L"序号",L"版本名称",L"文件名",L"大小",L"下载地址",L"状态"}; int w[]={60,180,220,110,600,120};
     for(int i=0;i<6;++i){ LVCOLUMNW c{}; c.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; c.pszText=(LPWSTR)cols[i]; c.cx=w[i]; c.iSubItem=i; ListView_InsertColumn(list,i,&c);} }
 void CreateMainUi(HWND hwnd,HINSTANCE h,UiHandles& ui){
-    ui.font=CreateFontW(-18,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+    ui.font=CreateFontW(-18,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Microsoft YaHei UI");
+    if (!ui.font) {
+        ui.font=CreateFontW(-18,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+    }
     ui.urlEdit=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|ES_AUTOHSCROLL,0,0,0,0,hwnd,(HMENU)101,h,nullptr);
     ui.loadBtn=CreateWindowW(L"BUTTON",L"加载列表",WS_CHILD|WS_VISIBLE,0,0,0,0,hwnd,(HMENU)102,h,nullptr);
     ui.loadLocalBtn=CreateWindowW(L"BUTTON",L"加载本地CSV",WS_CHILD|WS_VISIBLE,0,0,0,0,hwnd,(HMENU)108,h,nullptr);
@@ -26,6 +29,7 @@ void CreateMainUi(HWND hwnd,HINSTANCE h,UiHandles& ui){
     ui.etaText=CreateWindowW(L"STATIC",L"预计剩余: --",WS_CHILD|WS_VISIBLE,0,0,0,0,hwnd,nullptr,h,nullptr);
     ui.logEdit=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY|WS_VSCROLL,0,0,0,0,hwnd,(HMENU)107,h,nullptr);
     g_logEdit = ui.logEdit;
+    SendMessageW(hwnd,WM_SETFONT,(WPARAM)ui.font,TRUE);
     for(HWND c: {ui.urlEdit,ui.loadBtn,ui.loadLocalBtn,ui.downloadDirEdit,ui.chooseDirBtn,ui.list,ui.downloadBtn,ui.cancelBtn,ui.openDirBtn,ui.clearLogBtn,ui.progress,ui.fileText,ui.speedText,ui.sizeText,ui.etaText,ui.logEdit}) SendMessageW(c,WM_SETFONT,(WPARAM)ui.font,TRUE);
     InitListViewColumns(ui.list);
     ui.listMenu=CreatePopupMenu(); AppendMenuW(ui.listMenu,MF_STRING,1201,L"下载选中项"); AppendMenuW(ui.listMenu,MF_STRING,1202,L"复制下载地址"); AppendMenuW(ui.listMenu,MF_STRING,1203,L"打开下载目录"); AppendMenuW(ui.listMenu,MF_STRING,1204,L"清空状态");
