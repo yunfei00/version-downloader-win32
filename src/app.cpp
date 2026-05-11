@@ -2,6 +2,7 @@
 #include "app.h"
 #include "csv_parser.h"
 #include "logger.h"
+#include "string_utils.h"
 #include "version.h"
 #include <fstream>
 #include <filesystem>
@@ -14,7 +15,7 @@ WNDCLASSW wc{}; wc.hInstance=h_; wc.lpszClassName=L"VersionDownloaderWnd"; wc.lp
 hwnd_=CreateWindowExW(0,wc.lpszClassName,APP_NAME L" v" APP_VERSION,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,1250,780,nullptr,nullptr,h_,this); ShowWindow(hwnd_,n);
 AppendLogText(BuildLogLine(std::wstring(L"启动 ") + APP_NAME + L" v" + APP_VERSION));
 AppendLogText(BuildLogLine(std::wstring(L"构建时间: ") + BUILD_DATE));
-AppendLogText(L"Application initialized.");
+AppendLogText(BuildLogLine(L"程序初始化完成"));
 MSG msg; while(GetMessageW(&msg,nullptr,0,0)){TranslateMessage(&msg);DispatchMessageW(&msg);} return (int)msg.wParam; }
 LRESULT CALLBACK App::WndProc(HWND h,UINT m,WPARAM w,LPARAM l){ App* a=(App*)GetWindowLongPtrW(h,GWLP_USERDATA); if(m==WM_NCCREATE){a=(App*)((CREATESTRUCTW*)l)->lpCreateParams; SetWindowLongPtrW(h,GWLP_USERDATA,(LONG_PTR)a); a->hwnd_=h;} return a?a->Handle(m,w,l):DefWindowProcW(h,m,w,l);} 
 LRESULT App::Handle(UINT m,WPARAM w,LPARAM l){ switch(m){ case WM_CREATE: CreateMainUi(hwnd_,h_,ui_); LoadConfig(); SetWindowTextW(ui_.downloadDirEdit,downloadDir_.c_str()); EnableWindow(ui_.cancelBtn,FALSE); return 0; case WM_SIZE: ResizeMainUi(hwnd_,ui_); return 0;
@@ -48,5 +49,5 @@ void App::SaveConfig(){ WritePrivateProfileStringW(L"General",L"DownloadDir",dow
 bool App::ChooseDownloadDir(){ BROWSEINFOW bi{}; bi.hwndOwner=hwnd_; bi.lpszTitle=L"选择下载目录"; PIDLIST_ABSOLUTE id=SHBrowseForFolderW(&bi); if(!id) return false; wchar_t p[MAX_PATH]{}; SHGetPathFromIDListW(id,p); CoTaskMemFree(id); downloadDir_=p; SetWindowTextW(ui_.downloadDirEdit,p); SaveConfig(); return true; }
 void App::ClearStatuses(){ for(size_t i=0;i<items_.size();++i) SetStatus((int)i,L"等待下载"); }
 void App::CopySelectedUrls(){ auto rows=SelectedRows(); std::wstring t; for(int r:rows) t += items_[r].url + L"\r\n"; if(OpenClipboard(hwnd_)){ EmptyClipboard(); size_t sz=(t.size()+1)*sizeof(wchar_t); HGLOBAL h=GlobalAlloc(GMEM_MOVEABLE,sz); memcpy(GlobalLock(h),t.c_str(),sz); GlobalUnlock(h); SetClipboardData(CF_UNICODETEXT,h); CloseClipboard(); }}
-bool App::SaveLogs(){ SYSTEMTIME st{}; GetLocalTime(&st); wchar_t fn[128]; wsprintfW(fn,L"version-downloader-%04d%02d%02d-%02d%02d%02d.log",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond); std::wstring path=downloadDir_+L"\\"+fn; int len=GetWindowTextLengthW(ui_.logEdit); std::wstring txt(len+1,L'\0'); GetWindowTextW(ui_.logEdit,txt.data(),len+1); std::wofstream ofs(path); ofs<<txt; return true; }
+bool App::SaveLogs(){ SYSTEMTIME st{}; GetLocalTime(&st); wchar_t fn[128]; wsprintfW(fn,L"version-downloader-%04d%02d%02d-%02d%02d%02d.log",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond); std::wstring path=downloadDir_+L"\\"+fn; int len=GetWindowTextLengthW(ui_.logEdit); std::wstring txt(static_cast<size_t>(len)+1,L'\0'); GetWindowTextW(ui_.logEdit,txt.data(),len+1); txt.resize(static_cast<size_t>(len)); std::string utf8 = WideToUtf8(txt); HANDLE h = CreateFileW(path.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr); if(h==INVALID_HANDLE_VALUE){ return false; } DWORD written=0; const unsigned char bom[3]={0xEF,0xBB,0xBF}; WriteFile(h,bom,3,&written,nullptr); if(!utf8.empty()){ WriteFile(h,utf8.data(),(DWORD)utf8.size(),&written,nullptr);} CloseHandle(h); return true; }
 bool App::ConfirmOverwrite(const std::wstring& path, bool& cancelAll, bool& skip){ cancelAll=false; skip=false; if(!std::filesystem::exists(path)) return true; int r=MessageBoxW(hwnd_,(L"文件已存在:\n"+path+L"\n是=覆盖, 否=跳过, 取消=取消全部").c_str(),L"文件已存在",MB_YESNOCANCEL|MB_ICONQUESTION); if(r==IDYES) return true; if(r==IDNO){skip=true; return false;} cancelAll=true; return false; }

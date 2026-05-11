@@ -1,6 +1,6 @@
 #pragma once
 
-#define APP_NAME L"Version Downloader"
+#define APP_NAME L"版本下载工具"
 #define APP_VERSION L"0.2.0"
 
 #define STRINGIZE2(x) #x
